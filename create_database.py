@@ -1,9 +1,15 @@
+import os
+import shutil
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import Chroma
+from dotenv import load_dotenv
+load_dotenv()
 
 DATA_PATH = 'data'
+CHROMA_PATH = 'chroma'
 
 def load_documents():
     loader = DirectoryLoader(
@@ -25,5 +31,16 @@ def split_text(documents):
     print(f"Split {len(documents)} document(s) into {len(chunks)} chunks.")
 
     return chunks
+
+def create_chroma_db(chunks):
+    if os.path.exists(CHROMA_PATH):
+        shutil.rmtree(CHROMA_PATH)
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    db = Chroma.from_documents(
+        documents=chunks,
+        embedding=embeddings,
+        persist_directory=CHROMA_PATH,
+    )
+    return db
     
-split_text(load_documents())
+create_chroma_db(split_text(load_documents()))
